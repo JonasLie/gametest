@@ -6,6 +6,7 @@
 //
 
 import SpriteKit
+import AVFoundation
 
 enum DifficultLevel {
     case easy
@@ -29,6 +30,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var gameScore = 0
     let highScoreLabel = SKLabelNode(text: "Highscore:")
     
+    // for saving highscore
     var defaults = UserDefaults.standard
     
         
@@ -38,6 +40,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let explosionSound = SKAction.playSoundFileNamed("explosion", waitForCompletion: false)
     let shootSound = SKAction.playSoundFileNamed("LaserShot", waitForCompletion: false)
     
+    var audioPlayer = AVAudioPlayer()
+    var backgroundAudio: URL?
     
     var spawntimer = Timer()
     
@@ -69,6 +73,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addBackground()
         loadHighScore()
        
+        //MARK: - difficultLevel
         
         let difficultLevel: DifficultLevel = DifficultLevel.hard
         
@@ -76,10 +81,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         case .easy: Timer.scheduledTimer(timeInterval: 5, target: self, selector: #selector(GameScene.createEnemy), userInfo: nil, repeats: true)
         case .normal: Timer.scheduledTimer(timeInterval: 4, target: self, selector: #selector(GameScene.createEnemy), userInfo: nil, repeats: true)
         case .hard: Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(GameScene.createEnemy), userInfo: nil, repeats: true)
-            
-        }
+            }
         
+        // MARK: - play sound
+        
+        backgroundAudio = Bundle.main.url(forResource: "Steamtech-Mayhem", withExtension: "mp3")
+        
+        do {
+            guard let audio = backgroundAudio else {
+                return
+                }
+        audioPlayer = try AVAudioPlayer(contentsOf: audio)
+        } catch {
+        print("keine Musik gefunden.")
+            }
+        
+        audioPlayer.numberOfLoops = -1 // play sound
+        audioPlayer.prepareToPlay()
+        audioPlayer.play()
+       
     }
+    
+    // MARK: - spaceship moves
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         shoot()
@@ -100,6 +123,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     }
+    // MARK: - shoot
+    
         func shoot() {
         let bullet = SKSpriteNode(imageNamed: "bullet_red")
         bullet.position = player.position
@@ -119,7 +144,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let delete = SKAction.removeFromParent()
         bullet.run(SKAction.sequence([move, delete]))
     }
-    
+    // MARK: - create enemy
     @objc func createEnemy() {
         
         var enemyArray: [SKTexture] = []
@@ -151,6 +176,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         enemy.run(SKAction.sequence([move, delete]))
     }
+    // MARK: - Background view
     
     func addBackground() {
         background1.anchorPoint = CGPoint.zero
@@ -223,6 +249,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         
         }
+    // MARK: - userDefaults
     
     func saveHighScore(){
         defaults.set("\(gameScore)", forKey: "HIGHSCORE")
@@ -233,6 +260,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         highScoreLabel.text = "Highscore: \(highScore)"
         }
   
+    // MARK: - Background update
     
     override func update(_ currentTime: TimeInterval) {
         background1.position.y -= 5
